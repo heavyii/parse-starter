@@ -1,0 +1,47 @@
+version: '3.4'
+
+x-logging:
+  &default-logging
+  options:
+    max-size: '12m'
+    max-file: '5'
+  driver: json-file
+
+services:
+  postgis:
+    image: mdillon/postgis:11-alpine
+    restart: on-failure
+    logging: *default-logging
+    environment:
+      TZ: "CTS-8"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "mapserver"
+      POSTGRES_PASSWORD: "dlrc1234"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    deploy:
+      restart_policy:
+        condition: on-failure
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  parse-server:
+    restart: always
+    logging: *default-logging
+    image: node:14.15.5-alpine3.10
+    environment:
+      TZ:  "CTS-8"
+      EGG_SERVER_ENV: 'local'
+    working_dir: /worspace
+    volumes:
+      - ../:/worspace
+    ports:
+      - "1337:1337"
+    command: npm run start:prod
