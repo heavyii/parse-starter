@@ -5,6 +5,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 const debug = require('debug')('data-server:main');
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ParseServerModule } from '@app/parse-server';
 const envFilePath = process.env.NEST_JS_ENV || '.env.local';
 @Module({
   imports: [
@@ -15,7 +16,8 @@ const envFilePath = process.env.NEST_JS_ENV || '.env.local';
     EventEmitterModule.forRoot({
       wildcard: true,
       delimiter: ':'
-    })
+    }),
+    ParseServerModule.forRoot({}),
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,4 +1,18 @@
 {
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src"
+  "sourceRoot": "src",
+  "projects": {
+    "parse-server": {
+      "type": "library",
+      "root": "libs/parse-server",
+      "entryFile": "index",
+      "sourceRoot": "libs/parse-server/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/parse-server/tsconfig.lib.json"
+      }
+    }
+  },
+  "compilerOptions": {
+    "webpack": true
+  }
 }
