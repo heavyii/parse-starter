@@ -1,0 +1,67 @@
+version: '3.4'
+
+x-logging:
+  &default-logging
+  options:
+    max-size: '12m'
+    max-file: '5'
+  driver: json-file
+
+services:
+  mongodb:
+    image: mongo:4.4.6
+    restart: always
+    logging: *default-logging
+    container_name: mongodb
+    environment:
+      TZ: Asia/Shanghai
+      MONGO_INITDB_DATABASE: test
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: dlrc1234
+    volumes:
+      - ./db:/data/db
+      - ./configdb:/data/configdb
+      - ./initdb:/docker-entrypoint-initdb.d/:ro
+    ports:
+      - 27017:27017
+
+  redis:
+    restart: always
+    logging: *default-logging
+    container_name: redis
+    image: redis:6.2
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - 6379:6379
+    volumes:
+      - ./data:/data
+    # /data/redis.conf requirepass yourpasswd; loadmodule /data/tairhash_module.so
+    command: ["redis-server", "/data/redis.conf"]
+
+  dashboard:
+    logging: *default-logging
+    image: parseplatform/parse-dashboard
+    environment:
+      TZ:  "CTS-8"
+    volumes:
+      - ./src/config/dashboard.json:/src/Parse-Dashboard/parse-dashboard-config.json
+    ports:
+      - "4040:4040"
+    command: parse-dashboard --allowInsecureHTTP true
+
+  parse:
+    restart: always
+    logging: *default-logging
+    image: node:14.15.5-alpine3.10
+    environment:
+      TZ:  "CTS-8"
+      NODE_ENV: production
+      NEST_JS_ENV: 'dev'
+      DEBUG: 'location:*'
+    working_dir: /worspace
+    volumes:
+      - ./:/worspace
+    ports:
+      - "1337:1337"
+    command: node dist/main
