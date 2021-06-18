@@ -7,13 +7,13 @@ const debug = require('debug')('data-server:AppRedisService');
 export class AppRedisService {
 
   constructor(private readonly redisService: RedisService) {
-    let ioredis: Redis = this.redisService.getClient();
+    // let ioredis: Redis = this.redisService.getClient();
     
-    ioredis.info('server').then(value => {
-      debug('redis', value.split('\n')[1])
-    }).catch(err => {
-      debug('redis error', err)
-    });
+    // ioredis.info('server').then(value => {
+    //   debug('redis', value.split('\n')[1])
+    // }).catch(err => {
+    //   debug('redis error', err)
+    // });
   }
 
   onApplicationBootstrap() {

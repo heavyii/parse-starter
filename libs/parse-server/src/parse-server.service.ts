@@ -1,9 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost } from '@nestjs/core';
-const { ParseServer, RedisCacheAdapter, InMemoryCacheAdapter, logger } = require('parse-server');
+// const corsMiddleware =  require('cors');
+const { default: ParseServer, ParseGraphQLServer, InMemoryCacheAdapter, logger } = require('parse-server');
 const { ParseServerOptions, LiveQueryOptions } = require('parse-server/lib/Options/Definitions');
 import { WinstonLoggerAdapter } from 'parse-server/lib/Adapters/Logger/WinstonLoggerAdapter';
+import { ParseServerOptionsInterface } from '.';
+const express = require('express');
 
 const cyclist = require('cyclist');
 const debug = require('debug')('data-server:ParseServerService');
@@ -11,12 +14,35 @@ const debug = require('debug')('data-server:ParseServerService');
 @Injectable()
 export class ParseServerService {
     private readonly logger = new Logger(ParseServerService.name);
-    private readonly parseServer: any;
-    private readonly parseOptions: any;
+    public readonly parseServer: any;
+    private readonly parseOptions: ParseServerOptionsInterface;
+    public readonly parseGraphQLServer: any;
+    public readonly expressApp;
     constructor(private readonly configService: ConfigService,
         private adapterHost: HttpAdapterHost) {
         this.parseOptions = this.getConfig();
-        this.parseServer = new ParseServer(this.parseOptions);
+        const options = this.parseOptions;
+        // this.logger.debug(this.parseOptions, 'ParseServer Options');
+
+        const parseServer = this.parseServer = new ParseServer(options);
+       
+        if (options.mountGraphQL === true) {
+            const parseGraphQLServer = this.parseGraphQLServer = new ParseGraphQLServer(parseServer, {
+              graphQLPath: '*'
+            });
+            const app = new express();
+            parseGraphQLServer.applyGraphQL(app);
+            parseGraphQLServer.app = app;
+            this.logger.log(options.graphQLPath, 'parseGraphQLServer');
+        }
+        
+        // this.expressApp.use(corsMiddleware({
+        //     origin(origin, callback) {
+        //         debug('cors', origin);
+        //         callback(null, true);
+        //     },
+        //     credentials: true
+        // }));
     }
 
     onModuleInit() {
@@ -28,6 +54,7 @@ export class ParseServerService {
             this.logger.log('不启用liveq query', 'createLiveQueryServer');
         }
         
+        
     }
 
     /**
@@ -36,6 +63,19 @@ export class ParseServerService {
      */
     getParseServer() {
         return this.parseServer;
+    }
+
+    mountGraphQl(options: any, parseServer: any) {
+        if (options.mountGraphQL === true) {
+            const parseGraphQLServer = new ParseGraphQLServer(parseServer, {
+              graphQLPath: ''
+            });
+            const app = new express();
+            parseGraphQLServer.applyGraphQL(app);
+            parseGraphQLServer.app = app;
+            this.logger.log(options.graphQLPath, 'parseGraphQLServer');
+            return parseGraphQLServer;
+        }
     }
 
     getLoggerAdapter() {
@@ -75,7 +115,7 @@ export class ParseServerService {
         return new WinstonLoggerAdapter(options);
     }
 
-    getConfig() {
+    getConfig(): ParseServerOptionsInterface {
         if (this.parseOptions) {
             return this.parseOptions;
         }
@@ -110,7 +150,14 @@ export class ParseServerService {
             Reflect.set(config, 'cacheAdapter', PARSE_SERVER_CACHE_ADAPTER)
         }
 
-        this.logger.debug(config, 'ParseServer Options');
+        config.serverStartComplete = (err) => {
+            if (err) {
+                this.logger.error(err, 'ParseServer serverStartComplete');
+            } else {
+                this.logger.log('ready', 'ParseServer serverStartComplete');
+            }
+        }
+
         return config;
     }
 
@@ -121,8 +168,9 @@ export class ParseServerService {
                 let { env, action } = Reflect.get(Definitions, key);
                 
                 let value = this.configService.get(env);
-                debug('Definitions', env, value);
+                
                 if (value !== undefined) {
+                    // debug('Definitions', env, value);
                     Reflect.set(options, key, typeof action === 'function' ? action(value) : value);
                 }
             });

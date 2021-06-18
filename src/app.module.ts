@@ -24,13 +24,15 @@ const envFilePath = process.env.NEST_JS_ENV || '.env.local';
     RedisModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
         configService.get('xxx');
-          return [{
-            // name: 'default',
-            host: '192.168.14.7',
-            port: 6379,
-            db: 4,
-            password: 'seeklane1559'
-          }]
+          return [
+          //   {
+          //   // name: 'default',
+          //   host: '192.168.14.7',
+          //   port: 6379,
+          //   db: 4,
+          //   password: 'seeklane1559'
+          // }
+        ]
         },
         inject:[ConfigService]
     })
@@ -45,7 +47,5 @@ export class AppModule {
 
   }
   onModuleInit() {
-    this.logger.log('load env from ' + envFilePath);
-    debug('APP_ID', this.configService.get('APP_ID'))
   }
 }

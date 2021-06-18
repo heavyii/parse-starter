@@ -17,14 +17,21 @@ export class ParseServerModule {
   }
 
   configure(consumer: MiddlewareConsumer) {
-    
-    const SERVER_URL = this.configService.get<string>('SERVER_URL');
-    let { pathname } = new URL(SERVER_URL);
-    consumer
-      .apply(this.parseServerService.getParseServer())
-      .forRoutes(pathname);
+    const { mountPath, graphQLPath, mountGraphQL } = this.parseServerService.getConfig();
 
-      debug('configure MiddlewareConsumer path: ', pathname)
+    consumer
+      .apply(this.parseServerService.getParseServer().app)
+      .forRoutes(mountPath);
+
+      debug('MiddlewareConsumer ParseServer: ', mountPath);
+
+      if (mountGraphQL) {
+        debug('MiddlewareConsumer parseGraphQLServer: ', graphQLPath);
+        consumer
+          .apply(this.parseServerService.parseGraphQLServer.app)
+          .forRoutes(graphQLPath);
+      }
+      
   }
 
   public static forRoot(options: any): DynamicModule {
