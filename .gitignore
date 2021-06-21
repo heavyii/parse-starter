@@ -397,6 +397,7 @@ Temporary Items
 .env
 dist
 logs
+logs*
 documentation
 pgdata
 files

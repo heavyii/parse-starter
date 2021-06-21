@@ -1,4 +1,4 @@
-import { DynamicModule, MiddlewareConsumer, Module } from '@nestjs/common';
+import { DynamicModule, MiddlewareConsumer, Module, Logger } from '@nestjs/common';
 import { DiscoveryModule } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { PARSE_SERVER_OPTION_PROVIDER } from './parse-server.constants';
@@ -11,7 +11,7 @@ const debug = require('debug')('data-server:ParseServerModule');
   exports: [ParseServerService, ParseServerExplorer],
 })
 export class ParseServerModule {
-
+  private readonly logger = new Logger(ParseServerModule.name);
   constructor(private readonly configService: ConfigService,
     private readonly parseServerService: ParseServerService) {
   }
@@ -19,14 +19,13 @@ export class ParseServerModule {
   configure(consumer: MiddlewareConsumer) {
     const { mountPath, graphQLPath, mountGraphQL } = this.parseServerService.getConfig();
 
+    this.logger.log('parse-server path: ' + mountPath);
     consumer
       .apply(this.parseServerService.getParseServer().app)
       .forRoutes(mountPath);
 
-      debug('MiddlewareConsumer ParseServer: ', mountPath);
-
-      if (mountGraphQL) {
-        debug('MiddlewareConsumer parseGraphQLServer: ', graphQLPath);
+      if (Reflect.has(this.parseServerService.parseGraphQLServer || {}, 'app')) {
+        this.logger.log( 'parse-GraphQLServer path: ' + graphQLPath );
         consumer
           .apply(this.parseServerService.parseGraphQLServer.app)
           .forRoutes(graphQLPath);

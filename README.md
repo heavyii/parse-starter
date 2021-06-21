@@ -8,7 +8,7 @@ data-server服务
 * nest
 * parse-server
 * redis
-* mongodb
+* mongodb/postgre
 
 ## 约定
 

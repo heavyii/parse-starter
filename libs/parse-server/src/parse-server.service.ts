@@ -20,12 +20,12 @@ export class ParseServerService {
     public readonly expressApp;
     constructor(private readonly configService: ConfigService,
         private adapterHost: HttpAdapterHost) {
-        this.parseOptions = this.getConfig();
+        const parseOptions = this.parseOptions = this.getConfig();
         const options = this.parseOptions;
         // this.logger.debug(this.parseOptions, 'ParseServer Options');
 
         const parseServer = this.parseServer = new ParseServer(options);
-       
+    
         if (options.mountGraphQL === true) {
             const parseGraphQLServer = this.parseGraphQLServer = new ParseGraphQLServer(parseServer, {
               graphQLPath: '*'
@@ -33,28 +33,23 @@ export class ParseServerService {
             const app = new express();
             parseGraphQLServer.applyGraphQL(app);
             parseGraphQLServer.app = app;
-            this.logger.log(options.graphQLPath, 'parseGraphQLServer');
+            // this.logger.log(options.graphQLPath, 'parseGraphQLServer');
         }
-        
-        // this.expressApp.use(corsMiddleware({
-        //     origin(origin, callback) {
-        //         debug('cors', origin);
-        //         callback(null, true);
-        //     },
-        //     credentials: true
-        // }));
     }
 
-    onModuleInit() {
+    // onModuleInit() {
+    onApplicationBootstrap() {
+        this.startQueryServer();
+    }
+
+    startQueryServer() {
         let parseOptions = this.getConfig();
         if (parseOptions.liveQuery !== undefined && Array.isArray(parseOptions.liveQuery.classNames) && parseOptions.liveQuery.classNames.length > 0) {
-            this.logger.log(parseOptions.liveQuery.classNames, 'createLiveQueryServer');
+            this.logger.log('Parse-LiveQueryServer live classes: ' + parseOptions.liveQuery.classNames.join(','));
             ParseServer.createLiveQueryServer(this.adapterHost.httpAdapter.getHttpServer(), this.parseOptions.liveQuery);
         } else {
-            this.logger.log('不启用liveq query', 'createLiveQueryServer');
+            this.logger.log('Parse-LiveQueryServer: 不启用liveq query');
         }
-        
-        
     }
 
     /**
@@ -63,19 +58,6 @@ export class ParseServerService {
      */
     getParseServer() {
         return this.parseServer;
-    }
-
-    mountGraphQl(options: any, parseServer: any) {
-        if (options.mountGraphQL === true) {
-            const parseGraphQLServer = new ParseGraphQLServer(parseServer, {
-              graphQLPath: ''
-            });
-            const app = new express();
-            parseGraphQLServer.applyGraphQL(app);
-            parseGraphQLServer.app = app;
-            this.logger.log(options.graphQLPath, 'parseGraphQLServer');
-            return parseGraphQLServer;
-        }
     }
 
     getLoggerAdapter() {
@@ -181,7 +163,7 @@ export class ParseServerService {
         const parseOptions = getOptionFromDefinitions(ParseServerOptions);
         Reflect.set(parseOptions, 'liveQuery', liveQuery);
         
-        this.logger.debug(parseOptions, 'parseOptions');
+        debug('parseOptions', parseOptions);
 
         return parseOptions;
     }
