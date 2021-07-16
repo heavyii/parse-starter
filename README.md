@@ -36,15 +36,9 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
-## Test
+## dashboard
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```
+npm install -g parse-dashboard
+parse-dashboard --dev --appId yourAppId --masterKey yourMasterKey --serverURL "https://example.com/parse" --appName optionalName
 ```

@@ -8,7 +8,6 @@ import { WinstonLoggerAdapter } from 'parse-server/lib/Adapters/Logger/WinstonLo
 import { ParseServerOptionsInterface } from '.';
 const express = require('express');
 
-const cyclist = require('cyclist');
 const debug = require('debug')('data-server:ParseServerService');
 
 @Injectable()
@@ -58,43 +57,6 @@ export class ParseServerService {
      */
     getParseServer() {
         return this.parseServer;
-    }
-
-    getLoggerAdapter() {
-        let bufferListIdx = 0;
-        const bufferList = cyclist(100)
-        return {
-            log() {
-                let jlog = {
-                    level: arguments[0],
-                    message: Array.from(arguments).map(x => `${x}`).join(' '),
-                    timestamp: new Date().toISOString()
-                }
-                bufferList.put(bufferListIdx++, jlog);
-                console.log.apply(console, arguments)
-            },
-
-            query() {
-                let logdata = [];
-                let idx = bufferListIdx;
-                for( let i = 1; i < 100; i++) {
-                    let d = bufferList.get(idx - i);
-                    if (!d) {
-                        break;
-                    }
-                    logdata.push(d);
-                }
-                return Promise.resolve(logdata);
-            }
-        }
-        const options = {
-            logsFolder: './logs2021',
-            jsonLogs: false,
-            verbose: true,
-            silent: false
-          };
-
-        return new WinstonLoggerAdapter(options);
     }
 
     getConfig(): ParseServerOptionsInterface {

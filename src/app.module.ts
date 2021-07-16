@@ -9,7 +9,7 @@ const debug = require('debug')('data-server:main');
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ParseServerModule } from '@app/parse-server';
 import { AppRedisService } from './app-redis.service';
-const envFilePath = process.env.NEST_JS_ENV || '.env.local';
+const envFilePath = process.env.NEST_JS_ENV || '.env';
 @Module({
   imports: [
     /**
