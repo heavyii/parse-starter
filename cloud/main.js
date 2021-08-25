@@ -1,4 +1,4 @@
-const Parse = require('Parse/node');
+// const Parse = require('Parse/node');
 const debug = require('debug')('data-server:cloud');
 
 Parse.Cloud.job('myJob', request => {

@@ -12,12 +12,11 @@ services:
     image: mongo:4.4.6
     restart: always
     logging: *default-logging
-    container_name: mongodb
     environment:
       TZ: Asia/Shanghai
       MONGO_INITDB_DATABASE: test
       MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: dlrc1234
+      MONGO_INITDB_ROOT_PASSWORD: YOUR_PASSWORD
     volumes:
       - ./db:/data/db
       - ./configdb:/data/configdb
@@ -27,7 +26,6 @@ services:
 
   postgis:
     image: postgis/postgis:13-3.1-alpine
-    container_name: postgis
     restart: always
     ports:
       - 5432:5432
@@ -36,12 +34,12 @@ services:
       - ./data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: dlrc1234
+      POSTGRES_PASSWORD: YOUR_PASSWORD
+      POSTGRES_DB: datacenter
       
   redis:
     restart: always
     logging: *default-logging
-    container_name: redis
     image: redis:6.2
     environment:
       TZ: Asia/Shanghai
@@ -49,31 +47,48 @@ services:
       - 6379:6379
     volumes:
       - ./data:/data
-    # /data/redis.conf requirepass yourpasswd; loadmodule /data/tairhash_module.so
-    command: ["redis-server", "/data/redis.conf"]
+    command: ["redis-server", "--requirepass", "YOUR_PASSWORD"]
 
   dashboard:
     logging: *default-logging
     image: parseplatform/parse-dashboard
     environment:
       TZ:  "CTS-8"
-    volumes:
-      - ./src/config/dashboard.json:/src/Parse-Dashboard/parse-dashboard-config.json
     ports:
       - "4040:4040"
-    command: parse-dashboard --allowInsecureHTTP true
+    command: parse-dashboard --dev --appId YOUR_APP_ID --masterKey YOUR_MASTER_KEY --serverURL "http://localhost:1337/parse" --graphQLServerURL "http://localhost:1337/graphql" --appName YOUR_APP_NAME
 
   parse:
     restart: always
     logging: *default-logging
-    image: node:14.15.5-alpine3.10
+    image: parse-starter:last
     environment:
-      TZ:  "CTS-8"
-      NODE_ENV: production
-      NEST_JS_ENV: '.env'
-    working_dir: /worspace
+      - TZ="CTS-8"
+      - NODE_ENV=production
+      - PARSE_SERVER_APPLICATION_ID=YOUR_APP_ID
+      - PARSE_SERVER_APP_NAME=YOUR_APP_NAME
+      - PARSE_SERVER_MASTER_KEY=YOUR_MASTER_KEY
+      - PARSE_SERVER_READ_ONLY_MASTER_KEY=ro:YOUR_MASTER_KEY
+      - PARSE_SERVER_MOUNT_PATH=/parse
+      - PARSE_SERVER_DIRECT_ACCESS=true
+      - PARSE_SERVER_ENABLE_EXPERIMENTAL_DIRECT_ACCESS=true
+      - SERVER_URL=http://localhost:1337/parse
+      - PARSE_PUBLIC_SERVER_URL=http://localhost:1337/parse
+      - PARSE_SERVER_DATABASE_URI=postgres://postgres:YOUR_PASSWORD@postgis:5432/datacenter?stringtype=unspecified&timezone=Asia/Shanghai&application_name=datacenter
+      - PARSE_SERVER_ALLOW_CLIENT_CLASS_CREATION=true
+      - PARSE_SERVER_WEBHOOK_KEY=fasfjif83412u98fnfuwfi
+      - PARSE_SERVER_LOG_LEVEL=debug
+      - PARSE_SERVER_LOGGER_ADAPTER={"module":"parse-server/lib/Adapters/Logger/WinstonLoggerAdapter","options":{"logsFolder":"./logs","jsonLogs":true,"logLevel":"verbose","silent":false,"maxLogFiles":6}}
+      - PARSE_SERVER_FILES_ADAPTER={"module":"@parse/fs-files-adapter","options":{"filesSubDirectory":"./files"}}
+      - PARSE_SERVER_FILE_KEY=YOUR_FILE_KEY
+      - PARSE_SERVER_LIVEQUERY_CLASSNAMES=GameScore
+      - PARSE_SERVER_MOUNT_GRAPHQL=true
+      - PARSE_SERVER_GRAPHQL_PATH=/graphql
+      - PARSE_SERVER_ALLOW_ORIGIN=*
+      - PARSE_SERVER_ALLOW_HEADERS=X-ENCRYPT-CONTEXT
+      - PARSE_SERVER_CLOUD=/workspace/cloud/main.js
     volumes:
-      - ./:/worspace
+      - ./cloud:/workspace/cloud
+      - ./logs:/workspace/logs
     ports:
       - "1337:1337"
-    command: node dist/main

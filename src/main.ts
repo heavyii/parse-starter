@@ -5,6 +5,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     // logger: console
   });
-  await app.listen(1337);
+  
+  const port = 1337;
+  await app.listen(port, () => {
+    console.log('listen localhost:' + port)
+  });
 }
 bootstrap();
